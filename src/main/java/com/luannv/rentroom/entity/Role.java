@@ -1,16 +1,26 @@
 package com.luannv.rentroom.entity;
 
+import com.luannv.rentroom.exception.Error;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
 import java.util.List;
-import java.util.Locale;
+
+import static com.luannv.rentroom.exception.Error.ROLE_INVALID;
 
 @Entity
 @Table(name = "roles")
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
     private String name;
     @PrePersist
     @PreUpdate
@@ -18,29 +28,5 @@ public class Role {
         this.name = this.name.toUpperCase();
     }
     @OneToMany(mappedBy = "role")
-    private List<User> users;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(List<User> users) {
-        this.users = users;
-    }
+    private List<UserEntity> users;
 }
