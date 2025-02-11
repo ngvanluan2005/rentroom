@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,6 +14,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Configuration
 public class SecurityConfig {
@@ -27,9 +32,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/roles/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/users/**").hasAnyAuthority("ADMIN", "MODERATOR")
-                        .anyRequest().authenticated()
+//                        .requestMatchers("/api/roles/**").hasAuthority("ADMIN")
+//                        .requestMatchers("/api/users/**").hasAnyAuthority("ADMIN", "MODERATOR")
+                        .anyRequest().permitAll()
                 )
                 .userDetailsService(userDetailsService)
                 .httpBasic(Customizer.withDefaults());
@@ -38,6 +43,15 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+    public UserDetails getUserDetails() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Set<String> roles = authentication.getAuthorities().stream()
+                .map(r -> r.getAuthority()).collect(Collectors.toSet());
+        for (String role : roles) {
+            System.out.println("ROLE: " + role);
+        }
+        return null;
     }
 //    Hard code user data
 //    @Bean

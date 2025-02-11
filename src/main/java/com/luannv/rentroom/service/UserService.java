@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 // admin/moderator/user|luan.123
 @Service
@@ -56,5 +57,9 @@ public class UserService {
     public void deleteByUsername(String username) {
         UserEntity userEntity = this.userRepository.findByUsername(username).orElseThrow(() -> new ValueException(ErrorCode.USERNAME_NOT_EXISTED));
         this.userRepository.delete(userEntity);
+    }
+
+    public Optional<UserEntity> getUserById(String id) {
+        return this.userRepository.findById(id);
     }
 }

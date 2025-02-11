@@ -30,7 +30,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) {
         UserEntity userEntity = this.userRepository.findByUsername(username)
                 .orElseThrow(() -> new ValueException(ErrorCode.USERNAME_NOT_EXISTED));
-        System.out.println(username + " " + userEntity.getRole().getName());
         List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(userEntity.getRole().getName()));
         return new User(userEntity.getUsername(), userEntity.getPassword(), authorities);
     }
