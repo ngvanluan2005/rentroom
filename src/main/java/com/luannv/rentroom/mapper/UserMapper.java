@@ -37,6 +37,7 @@ public class UserMapper implements GenericMapper<UserEntity, UserRequestDTO, Use
                 .address(userEntity.getAddress())
                 .email(userEntity.getEmail())
                 .username(userEntity.getUsername())
+                .avatar(userEntity.getAvatar())
                 .roleId(3)
                 .build();
     }

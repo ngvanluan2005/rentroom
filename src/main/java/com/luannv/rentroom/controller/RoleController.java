@@ -28,8 +28,8 @@ public class RoleController {
         return this.roleService.getRoleById(roleId);
     }
     @PostMapping
-    public ApiResponse<RoleResponseDTO> addNewRole(@RequestBody @Valid RoleRequestDTO roleRequestDTO) {
-        ApiResponse<RoleResponseDTO> apiResponse = new ApiResponse<>();
+    public ApiResponse<RoleResponseDTO, ?> addNewRole(@RequestBody @Valid RoleRequestDTO roleRequestDTO) {
+        ApiResponse apiResponse = new ApiResponse<>();
         apiResponse.setCode(100);
         apiResponse.setResult(this.roleService.addRole(roleRequestDTO));
         return apiResponse;

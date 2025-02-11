@@ -1,5 +1,6 @@
 package com.luannv.rentroom.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -14,14 +15,23 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
+    private final UserDetailsService userDetailsService;
+
+    @Autowired
+    public SecurityConfig(UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/roles/**", "/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/roles/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/users/**").hasAnyAuthority("ADMIN", "MODERATOR")
                         .anyRequest().authenticated()
                 )
+                .userDetailsService(userDetailsService)
                 .httpBasic(Customizer.withDefaults());
         return http.build();
     }
@@ -29,26 +39,27 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails admin = User
-                .builder()
-                .username("admin")
-                .password(passwordEncoder().encode("admin"))
-                .roles("ADMIN")
-                .build();
-        UserDetails moderator = User
-                .builder()
-                .username("moderator")
-                .password(passwordEncoder().encode("moderator"))
-                .roles("MODERATOR")
-                .build();
-        UserDetails user = User
-                .builder()
-                .username("user")
-                .password(passwordEncoder().encode("user"))
-                .roles("USER")
-                .build();
-        return new InMemoryUserDetailsManager(admin, moderator, user);
-    }
+//    Hard code user data
+//    @Bean
+//    public UserDetailsService userDetailsService() {
+//        UserDetails admin = User
+//                .builder()
+//                .username("admin")
+//                .password(passwordEncoder().encode("admin"))
+//                .roles("ADMIN")
+//                .build();
+//        UserDetails moderator = User
+//                .builder()
+//                .username("moderator")
+//                .password(passwordEncoder().encode("moderator"))
+//                .roles("MODERATOR")
+//                .build();
+//        UserDetails user = User
+//                .builder()
+//                .username("user")
+//                .password(passwordEncoder().encode("user"))
+//                .roles("USER")
+//                .build();
+//        return new InMemoryUserDetailsManager(admin, moderator, user);
+//    }
 }

@@ -19,11 +19,11 @@ public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    @Column(name = "username", unique = true)
+    @Column(name = "username")
     private String username;
     @Column(name = "full_name")
     private String fullName;
-    @Column(name = "email", unique = true)
+    @Column(name = "email")
     private String email;
     @Lob
     @Column(name = "avatar", columnDefinition = "LONGBLOB")

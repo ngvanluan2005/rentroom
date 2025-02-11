@@ -3,6 +3,7 @@ package com.luannv.rentroom.controller;
 import com.luannv.rentroom.dto.request.UserRequestDTO;
 import com.luannv.rentroom.dto.response.ApiResponse;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
+import com.luannv.rentroom.exception.ErrorCode;
 import com.luannv.rentroom.repository.UserRepository;
 import com.luannv.rentroom.service.UserService;
 import jakarta.validation.Valid;
@@ -16,7 +17,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -36,14 +39,9 @@ public class UserController {
 //        return apiResponse;
 //    }
     @PostMapping(consumes = {"application/json", "multipart/form-data"})
-    public ApiResponse<?> createUser(@RequestParam(value = "file", required = false) MultipartFile file,
-                                                   @Valid @ModelAttribute UserRequestDTO userRequestDTO, BindingResult bindingResult) {
+    public ApiResponse<UserResponseDTO, ?> createUser(@RequestParam(value = "file", required = false) MultipartFile file,
+                                                   @Valid @ModelAttribute UserRequestDTO userRequestDTO) {
         ApiResponse apiResponse = new ApiResponse();
-        if (bindingResult.hasErrors()) {
-            System.out.println(">> BUG: " + bindingResult.getFieldError().getField() + " " + bindingResult.getFieldError().getDefaultMessage());
-        } else {
-            System.out.println("NO bug");
-        }
         apiResponse.setCode(HttpStatus.OK.value());
         apiResponse.setResult(this.userService.addUser(userRequestDTO, file));
         return apiResponse;
@@ -51,5 +49,24 @@ public class UserController {
     @GetMapping
     public List<UserResponseDTO> getAllUser() {
         return this.userService.getAll();
+    }
+    @GetMapping("/{username}")
+    public UserResponseDTO getUserByUsername(@PathVariable String username) {
+        return this.userService.getUserByUsername(username);
+    }
+    // put after have validation
+    @DeleteMapping("/{username}")
+    public ApiResponse<String, ?> deleteUserByUsername(@PathVariable String username) {
+        ApiResponse apiResponse = new ApiResponse();
+        try {
+            this.userService.deleteByUsername(username);
+            apiResponse.setCode(HttpStatus.OK.value());
+            apiResponse.setMessages("Delete User: " + username + " success!");
+        } catch (Exception e) {
+            apiResponse.setCode(HttpStatus.BAD_REQUEST.value());
+            apiResponse.setMessages(ErrorCode.USER_DELETE_FAIL);
+        }
+
+        return apiResponse;
     }
 }

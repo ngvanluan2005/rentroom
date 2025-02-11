@@ -3,11 +3,10 @@ package com.luannv.rentroom.service;
 import com.luannv.rentroom.dto.response.RoleResponseDTO;
 import com.luannv.rentroom.dto.request.RoleRequestDTO;
 import com.luannv.rentroom.entity.Role;
-import com.luannv.rentroom.exception.Error;
+import com.luannv.rentroom.exception.ErrorCode;
 import com.luannv.rentroom.exception.ValueException;
 import com.luannv.rentroom.mapper.RoleMapper;
 import com.luannv.rentroom.repository.RoleRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,16 +38,16 @@ public class RoleService {
         return this.roleMapper
                 .toResponseDTO(
                         this.roleRepository.findById(id)
-                                .orElseThrow(() -> new ValueException(Error.ROLE_NOTFOUND)));
+                                .orElseThrow(() -> new ValueException(ErrorCode.ROLE_NOTFOUND)));
     }
     public RoleResponseDTO updateRoleById(Integer id, RoleRequestDTO roleRequestDTO) {
-        Role role = this.roleRepository.findById(id).orElseThrow(()-> new ValueException(Error.ROLE_NOTFOUND));
+        Role role = this.roleRepository.findById(id).orElseThrow(()-> new ValueException(ErrorCode.ROLE_NOTFOUND));
         role.setName(roleRequestDTO.getName());
         Role savedRole = this.roleRepository.save(role);
         return this.roleMapper.toResponseDTO(savedRole);
     }
     public void deleteRoleById(Integer id) {
-        Role role = this.roleRepository.findById(id).orElseThrow(()-> new ValueException(Error.ROLE_NOTFOUND));
+        Role role = this.roleRepository.findById(id).orElseThrow(()-> new ValueException(ErrorCode.ROLE_NOTFOUND));
         this.roleRepository.deleteById(role.getId());
     }
 }
