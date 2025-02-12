@@ -10,6 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
+import static com.luannv.rentroom.constants.UrlConstants.API_USER;
+
 @Component
 public class UserMapper implements GenericMapper<UserEntity, UserRequestDTO, UserResponseDTO> {
     private final PasswordEncoder passwordEncoder;
@@ -37,7 +39,7 @@ public class UserMapper implements GenericMapper<UserEntity, UserRequestDTO, Use
                 .address(userEntity.getAddress())
                 .email(userEntity.getEmail())
                 .username(userEntity.getUsername())
-                .avatar(userEntity.getAvatar())
+                .avatar(API_USER+"/"+userEntity.getUsername() + "/avatar")
                 .roleId(3)
                 .build();
     }

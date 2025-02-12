@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.luannv.rentroom.constants.UrlConstants.API_ROLE;
+
 @RestController
-@RequestMapping("/api/roles")
+@RequestMapping(API_ROLE)
 public class RoleController {
     private final RoleService roleService;
     @Autowired

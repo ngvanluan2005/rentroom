@@ -17,7 +17,7 @@ public class UserResponseDTO {
     private String username;
     private String fullName;
     private String email;
-    private byte[] avatar;
+    private String avatar;
     private String address;
     private int roleId = 3;
 }

@@ -3,39 +3,25 @@ package com.luannv.rentroom.controller;
 import com.luannv.rentroom.dto.request.UserRequestDTO;
 import com.luannv.rentroom.dto.response.ApiResponse;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
-import com.luannv.rentroom.entity.UserEntity;
 import com.luannv.rentroom.exception.ErrorCode;
-import com.luannv.rentroom.repository.UserRepository;
 import com.luannv.rentroom.service.UserService;
 import jakarta.validation.Valid;
-import jdk.jfr.ContentType;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.parameters.P;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.List;
+
+import static com.luannv.rentroom.constants.UrlConstants.API_USER;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping(API_USER)
 public class UserController {
-    public static String getCurrentRole() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() ||
-        authentication instanceof AnonymousAuthenticationToken)
-            return null;
-        return authentication.getAuthorities().iterator().next().getAuthority();
-    }
+
     private final UserService userService;
     @Autowired
     public UserController(UserService userService) {
@@ -50,7 +36,6 @@ public class UserController {
 //        apiResponse.setResult(userResponseDTO);
 //        return apiResponse;
 //    }
-
     @PostMapping(consumes = {"application/json", "multipart/form-data"})
     public ApiResponse<UserResponseDTO, ?> createUser(@RequestParam(value = "file", required = false) MultipartFile file,
                                                    @Valid @ModelAttribute UserRequestDTO userRequestDTO) {
@@ -61,8 +46,14 @@ public class UserController {
     }
     @GetMapping
     public List<UserResponseDTO> getAllUser() {
-        System.out.println(getCurrentRole());
         return this.userService.getAll();
+    }
+    @GetMapping("/{username}/avatar")
+    public ResponseEntity<byte[]> getUserAvatar(@PathVariable String username) {
+        byte[] ref = this.userService.getUserAvatar(username);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Content-Type", "image/jpeg");
+        return new ResponseEntity<>(ref, httpHeaders, HttpStatus.OK);
     }
     @GetMapping("/{username}")
     public UserResponseDTO getUserByUsername(@PathVariable String username) {

@@ -10,9 +10,9 @@ import org.springframework.util.CollectionUtils;
 public class SecurityUtils {
     public String getCurrentRole() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (authentication == null || !authentication.isAuthenticated() ||
+                authentication instanceof AnonymousAuthenticationToken)
             return null;
-        }
         return authentication.getAuthorities().iterator().next().getAuthority();
     }
 }
