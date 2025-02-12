@@ -44,15 +44,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    public UserDetails getUserDetails() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Set<String> roles = authentication.getAuthorities().stream()
-                .map(r -> r.getAuthority()).collect(Collectors.toSet());
-        for (String role : roles) {
-            System.out.println("ROLE: " + role);
-        }
-        return null;
-    }
 //    Hard code user data
 //    @Bean
 //    public UserDetailsService userDetailsService() {

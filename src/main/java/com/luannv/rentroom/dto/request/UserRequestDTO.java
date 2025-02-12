@@ -9,6 +9,9 @@ import lombok.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.time.LocalDateTime;
+
+import static com.luannv.rentroom.constants.FieldConstants.PASSWORD_PATTERN;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,7 +19,7 @@ import java.time.LocalDateTime;
 @Builder
 public class UserRequestDTO {
     @NotEmpty(message = "FIELD_NOT_BLANK")
-    @Pattern(regexp = "^(?![_-])[A-Za-z0-9_-]{3,9}(?<![-_])$", message = "USERNAME_INVALID")
+    @Pattern(regexp = "^(?![_-])[A-Za-z0-9_-]{3,15}(?<![-_])$", message = "USERNAME_INVALID")
     private String username;
     @NotEmpty(message = "FIELD_NOT_BLANK")
     private String firstName;
@@ -29,7 +32,8 @@ public class UserRequestDTO {
     private byte[] avatar;
 //    private int isActivate = 0;
     private String address;
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z]).{8,}$", message = "PASSWORD_INVALID")
+    @NotEmpty(message = "FIELD_NOT_BLANK")
+    @Pattern(regexp = PASSWORD_PATTERN, message = "PASSWORD_INVALID")
     private String password;
     private int roleId = 3;
 }

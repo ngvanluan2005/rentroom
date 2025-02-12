@@ -4,19 +4,22 @@ import com.luannv.rentroom.dto.request.UserRequestDTO;
 import com.luannv.rentroom.dto.response.ApiResponse;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
 import com.luannv.rentroom.exception.ErrorCode;
+import com.luannv.rentroom.exception.ListErrorException;
 import com.luannv.rentroom.service.UserService;
 import jakarta.validation.Valid;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.luannv.rentroom.constants.UrlConstants.API_USER;
+import static com.luannv.rentroom.constants.UrlConstants.DEFAULT_AVATAR;
 
 @RestController
 @RequestMapping(API_USER)
@@ -27,18 +30,14 @@ public class UserController {
     public UserController(UserService userService) {
         this.userService = userService;
     }
-
-//    @PostMapping
-//    public ApiResponse<UserResponseDTO> createUser(@Valid @ModelAttribute UserRequestDTO userRequestDTO, @RequestParam(value = "file", required = false) MultipartFile multipartFile) {
-//        ApiResponse apiResponse = new ApiResponse();
-//        UserResponseDTO userResponseDTO = this.userService.addUser(userRequestDTO, multipartFile);
-//        apiResponse.setCode(HttpStatus.OK.value());
-//        apiResponse.setResult(userResponseDTO);
-//        return apiResponse;
-//    }
     @PostMapping(consumes = {"application/json", "multipart/form-data"})
     public ApiResponse<UserResponseDTO, ?> createUser(@RequestParam(value = "file", required = false) MultipartFile file,
-                                                   @Valid @ModelAttribute UserRequestDTO userRequestDTO) {
+                                                      @Valid @ModelAttribute UserRequestDTO userRequestDTO, BindingResult bindingResult) {
+        Map<?, ?> additionalErrors = this.userService.validateUserRequest(bindingResult, userRequestDTO);
+        if (bindingResult.hasErrors() || !additionalErrors.isEmpty()) {
+            System.out.println(1);
+            throw new ListErrorException(ErrorCode.VALIDATION_FAILED, additionalErrors);
+        }
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(HttpStatus.OK.value());
         apiResponse.setResult(this.userService.addUser(userRequestDTO, file));
@@ -49,8 +48,11 @@ public class UserController {
         return this.userService.getAll();
     }
     @GetMapping("/{username}/avatar")
-    public ResponseEntity<byte[]> getUserAvatar(@PathVariable String username) {
+    // ? in responseEntity like byte[] or null value
+    public ResponseEntity<?> getUserAvatar(@PathVariable String username) {
         byte[] ref = this.userService.getUserAvatar(username);
+        if (ref == null)
+            return new ResponseEntity<>(DEFAULT_AVATAR, HttpStatus.OK);
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Content-Type", "image/jpeg");
         return new ResponseEntity<>(ref, httpHeaders, HttpStatus.OK);

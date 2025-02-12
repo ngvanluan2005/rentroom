@@ -19,5 +19,6 @@ public class UserResponseDTO {
     private String email;
     private String avatar;
     private String address;
-    private int roleId = 3;
+    private String roleName;
+    private Integer isActivate;
 }
