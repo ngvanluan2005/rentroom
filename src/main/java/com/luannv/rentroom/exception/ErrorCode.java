@@ -21,7 +21,8 @@ public enum ErrorCode {
     USER_DELETE_FAIL(1008, "Failed to delete user.", HttpStatus.BAD_REQUEST),
     EMAIL_INVALID(1009, "Email is not valid.", HttpStatus.BAD_REQUEST),
     EMAIL_EXISTED(2000, "Email has been used.", HttpStatus.BAD_REQUEST),
-    VALIDATION_FAILED(2001, "Validation failed", HttpStatus.BAD_REQUEST)
+    VALIDATION_FAILED(2001, "Validation failed", HttpStatus.BAD_REQUEST),
+    LOGIN_FAILED(2002, "Invalid username or password", HttpStatus.NO_CONTENT),
     ;
     private final Integer code;
     private final String messages;

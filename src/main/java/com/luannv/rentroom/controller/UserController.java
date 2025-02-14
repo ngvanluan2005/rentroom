@@ -1,6 +1,6 @@
 package com.luannv.rentroom.controller;
 
-import com.luannv.rentroom.dto.request.UserRequestDTO;
+import com.luannv.rentroom.dto.request.UserRegisterRequestDTO;
 import com.luannv.rentroom.dto.response.ApiResponse;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
 import com.luannv.rentroom.exception.ErrorCode;
@@ -29,19 +29,6 @@ public class UserController {
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
-    }
-    @PostMapping(consumes = {"application/json", "multipart/form-data"})
-    public ApiResponse<UserResponseDTO, ?> createUser(@RequestParam(value = "file", required = false) MultipartFile file,
-                                                      @Valid @ModelAttribute UserRequestDTO userRequestDTO, BindingResult bindingResult) {
-        Map<?, ?> additionalErrors = this.userService.validateUserRequest(bindingResult, userRequestDTO);
-        if (bindingResult.hasErrors() || !additionalErrors.isEmpty()) {
-            System.out.println(1);
-            throw new ListErrorException(ErrorCode.VALIDATION_FAILED, additionalErrors);
-        }
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setCode(HttpStatus.OK.value());
-        apiResponse.setResult(this.userService.addUser(userRequestDTO, file));
-        return apiResponse;
     }
     @GetMapping
     public List<UserResponseDTO> getAllUser() {

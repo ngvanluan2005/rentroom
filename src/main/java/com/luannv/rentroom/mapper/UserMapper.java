@@ -1,6 +1,6 @@
 package com.luannv.rentroom.mapper;
 
-import com.luannv.rentroom.dto.request.UserRequestDTO;
+import com.luannv.rentroom.dto.request.UserRegisterRequestDTO;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
 import com.luannv.rentroom.entity.UserEntity;
 import com.luannv.rentroom.utils.StringHandleUtils;
@@ -12,7 +12,7 @@ import static com.luannv.rentroom.constants.UrlConstants.API_USER;
 import static com.luannv.rentroom.constants.UrlConstants.DEFAULT_AVATAR;
 
 @Component
-public class UserMapper implements GenericMapper<UserEntity, UserRequestDTO, UserResponseDTO> {
+public class UserMapper implements GenericMapper<UserEntity, UserRegisterRequestDTO, UserResponseDTO> {
     private final PasswordEncoder passwordEncoder;
     private final StringHandleUtils stringHandleUtils;
     @Autowired
@@ -22,7 +22,7 @@ public class UserMapper implements GenericMapper<UserEntity, UserRequestDTO, Use
     }
 
     @Override
-    public UserEntity toEntity(UserRequestDTO userRequestDTO) {
+    public UserEntity toEntity(UserRegisterRequestDTO userRequestDTO) {
 
         return UserEntity.builder()
                 .fullName(this.stringHandleUtils.toCapitalizeString(userRequestDTO.getFirstName())

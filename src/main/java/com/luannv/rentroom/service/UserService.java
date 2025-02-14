@@ -1,10 +1,9 @@
 package com.luannv.rentroom.service;
 
-import com.luannv.rentroom.dto.request.UserRequestDTO;
+import com.luannv.rentroom.dto.request.UserRegisterRequestDTO;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
 import com.luannv.rentroom.entity.UserEntity;
 import com.luannv.rentroom.exception.ErrorCode;
-import com.luannv.rentroom.exception.ListErrorException;
 import com.luannv.rentroom.exception.SingleErrorException;
 import com.luannv.rentroom.mapper.UserMapper;
 import com.luannv.rentroom.repository.RoleRepository;
@@ -38,29 +37,6 @@ public class UserService {
         this.securityUtils = securityUtils;
         this.roleRepository = roleRepository;
     }
-    // not validation
-    public UserResponseDTO addUser(UserRequestDTO userRequestDTO, MultipartFile multipartFile) {
-        UserEntity userEntity = this.userMapper.toEntity(userRequestDTO);
-        if (this.securityUtils.getCurrentRole() != null && this.securityUtils.getCurrentRole().equalsIgnoreCase("admin")) {
-            userEntity.setRole(this.roleRepository.findById(userRequestDTO.getRoleId()).get());
-        } else {
-            userEntity.setRole(this.roleRepository.findById(3).get());
-        }
-        if (multipartFile != null && !multipartFile.isEmpty()) {
-            try {
-                UserResponseDTO userResponseDTO = this.userMapper.toResponseDTO(userEntity);
-                userResponseDTO.setAvatar(API_USER+"/"+userEntity.getUsername()+"/avatar");
-                userEntity.setAvatar(multipartFile.getBytes());
-                UserEntity saved = this.userRepository.save(userEntity);
-                userResponseDTO.setUserId(saved.getId());
-                return userResponseDTO;
-            } catch (IOException e) {
-                throw new RuntimeException("ErrorCode: ", e);
-            }
-        }
-        UserEntity saved = this.userRepository.save(userEntity);
-        return this.userMapper.toResponseDTO(saved);
-    }
 
     public List<UserResponseDTO> getAll() {
         return this.userRepository.findAll().stream().map(user -> this.userMapper.toResponseDTO(user)).collect(Collectors.toList());
@@ -82,18 +58,5 @@ public class UserService {
         return null;
     }
 
-    public Map<?, ?> validateUserRequest(BindingResult bindingResult, UserRequestDTO userRequestDTO) {
-        Map<String, String> errorsResponse = new HashMap<>();
-        bindingResult.getFieldErrors()
-                .forEach(err -> errorsResponse.put(err.getField(), ErrorCode.valueOf(err.getDefaultMessage()).getMessages()));
-        // key: field, value: defaultMessages->ErrorCode CONST
-        // why do not use <String, List<String>>, if has error, and map has key error, then not catch error :)
-        if (errorsResponse.get("username") == null && this.userRepository.existsByUsername(userRequestDTO.getUsername()))
-            errorsResponse.put("username", ErrorCode.USERNAME_EXISTED.getMessages());
-        if (errorsResponse.get("email") == null && this.userRepository.existsByEmail(userRequestDTO.getEmail()))
-            errorsResponse.put("email", ErrorCode.EMAIL_EXISTED.getMessages());
 
-//        errorsResponse.forEach((key, value) -> System.out.println(key + " " + value));
-        return errorsResponse;
-    }
 }

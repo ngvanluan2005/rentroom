@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import java.util.Base64;
 
 import static com.luannv.rentroom.constants.UrlConstants.DEFAULT_AVATAR;
-
 @Component
 public class StringHandleUtils {
     public String toCapitalizeString(String name) {

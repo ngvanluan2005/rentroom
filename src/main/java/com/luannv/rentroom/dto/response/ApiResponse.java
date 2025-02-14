@@ -11,6 +11,6 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T, S> {
     private Integer code;
-    private S messages;
     private T result;
+    private S messages;
 }

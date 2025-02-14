@@ -17,7 +17,7 @@ import static com.luannv.rentroom.constants.FieldConstants.PASSWORD_PATTERN;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserRequestDTO {
+public class UserRegisterRequestDTO {
     @NotEmpty(message = "FIELD_NOT_BLANK")
     @Pattern(regexp = "^(?![_-])[A-Za-z0-9_-]{3,15}(?<![-_])$", message = "USERNAME_INVALID")
     private String username;
