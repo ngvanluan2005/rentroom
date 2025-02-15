@@ -41,11 +41,12 @@ public class GlobalExceptionHandler {
             ErrorCode errorCode = ErrorCode.valueOf(enumKey);
             apiResponse.setCode(errorCode.getCode());
             apiResponse.setMessages(errorCode.getMessages());
+            return ResponseEntity.status(errorCode.getHttpStatus()).body(apiResponse);
         } catch(Exception e) {
             apiResponse.setCode(ErrorCode.ENUM_ISNOTEXIST.getCode());
             apiResponse.setMessages(ErrorCode.ENUM_ISNOTEXIST.getMessages());
         }
-        return ResponseEntity.badRequest().body(apiResponse);
+        return ResponseEntity.status(ErrorCode.ENUM_ISNOTEXIST.getHttpStatus()).body(apiResponse);
     }
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse> handleInputException(DataIntegrityViolationException dive) {

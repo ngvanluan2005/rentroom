@@ -1,14 +1,15 @@
 package com.luannv.rentroom.controller;
 
+import com.luannv.rentroom.dto.request.IntrospectRequest;
 import com.luannv.rentroom.dto.request.UserLoginRequestDTO;
 import com.luannv.rentroom.dto.request.UserRegisterRequestDTO;
 import com.luannv.rentroom.dto.response.ApiResponse;
 import com.luannv.rentroom.dto.response.AuthenticationResponse;
+import com.luannv.rentroom.dto.response.IntrospectResponse;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
 import com.luannv.rentroom.exception.ErrorCode;
 import com.luannv.rentroom.exception.ListErrorException;
 import com.luannv.rentroom.exception.SingleErrorException;
-import com.luannv.rentroom.mapper.UserMapper;
 import com.luannv.rentroom.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,6 @@ public class AuthController {
         apiResponse.setResult(this.authService.addUser(userRequestDTO, file));
         return apiResponse;
     }
-
     @PostMapping("/login")
     public ApiResponse<String, AuthenticationResponse> loginUser(@Valid @RequestBody UserLoginRequestDTO userLoginRequestDTO, BindingResult bindingResult) {
         AuthenticationResponse authenticationResponse = this.authService.loginUserValidate(userLoginRequestDTO, bindingResult);
@@ -51,6 +51,21 @@ public class AuthController {
         apiResponse.setCode(HttpStatus.OK.value());
         apiResponse.setResult(authenticationResponse);
         return apiResponse;
+    }
+    @PostMapping("/introspect")
+    public ApiResponse<IntrospectResponse, ?> verifyToken(@RequestBody IntrospectRequest introspectRequest) {
+        IntrospectResponse introspectResponse = this.authService.introspect(introspectRequest);
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+        String messages = "Invalid token.";
+        if (introspectResponse.isValid()) {
+            httpStatus = HttpStatus.OK;
+            messages = "Valid token.";
+        }
+        return ApiResponse.<IntrospectResponse, String>builder()
+                .result(introspectResponse)
+                .code(httpStatus.value())
+                .messages(messages)
+                .build();
     }
 
 }

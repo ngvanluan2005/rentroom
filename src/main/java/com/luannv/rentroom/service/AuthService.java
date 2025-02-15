@@ -1,8 +1,10 @@
 package com.luannv.rentroom.service;
 
+import com.luannv.rentroom.dto.request.IntrospectRequest;
 import com.luannv.rentroom.dto.request.UserLoginRequestDTO;
 import com.luannv.rentroom.dto.request.UserRegisterRequestDTO;
 import com.luannv.rentroom.dto.response.AuthenticationResponse;
+import com.luannv.rentroom.dto.response.IntrospectResponse;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
 import com.luannv.rentroom.entity.UserEntity;
 import com.luannv.rentroom.exception.ErrorCode;
@@ -10,14 +12,14 @@ import com.luannv.rentroom.mapper.UserMapper;
 import com.luannv.rentroom.repository.RoleRepository;
 import com.luannv.rentroom.repository.UserRepository;
 import com.luannv.rentroom.utils.SecurityUtils;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
@@ -25,11 +27,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.luannv.rentroom.constants.UrlConstants.API_USER;
 
@@ -41,7 +42,8 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     @NonFinal
-    protected final static String KEY_SIGNER = "jYsPLSJv56S57EyGIEfZyvXQjjKtvdTAXP1rYtANWh1Ebs/KUXNngoZko1dP6BcN";
+    @Value("${security.jwt.signerKey}")
+    protected String KEY_SIGNER;
     @Autowired
     public AuthService(UserRepository userRepository, UserMapper userMapper, SecurityUtils securityUtils, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -87,21 +89,18 @@ public class AuthService {
         return this.userMapper.toResponseDTO(saved);
     }
     public AuthenticationResponse loginUserValidate(UserLoginRequestDTO userLoginRequestDTO, BindingResult bindingResult) {
-        boolean isValidUsernameLogin = this.userRepository.existsByUsername(userLoginRequestDTO.getUsername());
-        if (isValidUsernameLogin){
-            UserEntity userEntity = this.userRepository.findByUsername(userLoginRequestDTO.getUsername()).get();
-            if (passwordEncoder.matches(userLoginRequestDTO.getPassword(), userEntity.getPassword())) {
-                String token = generateToken(userLoginRequestDTO.getUsername());
-                return AuthenticationResponse.builder()
-                        .token(token)
-                        .authenicated(true)
-                        .build();
-            }
-
+        UserEntity userEntity = this.userRepository.findByUsername(userLoginRequestDTO.getUsername()).get();
+        if (passwordEncoder.matches(userLoginRequestDTO.getPassword(), userEntity.getPassword())) {
+            String token = generateToken(userLoginRequestDTO.getUsername(),
+                    Collections.singletonList(userEntity.getRole().getName()));
+            return AuthenticationResponse.builder()
+                    .token(token)
+                    .authenicated(true)
+                    .build();
         }
         return null;
     }
-    public String generateToken(String username) {
+    public String generateToken(String username, List<String> roles) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(username)
@@ -109,6 +108,7 @@ public class AuthService {
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
                 .claim("claimer", "customeClaimer")
+                .claim("roles", roles)
                 .build();
         JWSObject jwsObject = new JWSObject(jwsHeader, jwtClaimsSet.toPayload());
         try {
@@ -118,5 +118,22 @@ public class AuthService {
             e.printStackTrace();
         }
         return "";
+    }
+    public IntrospectResponse introspect(IntrospectRequest introspectRequest) {
+        String token = introspectRequest.getToken();
+        try {
+            JWSVerifier verifier = new MACVerifier(KEY_SIGNER.getBytes(StandardCharsets.UTF_8));
+            SignedJWT signedJWT = SignedJWT.parse(token);
+            boolean verified = signedJWT.verify(verifier);
+            Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+            return IntrospectResponse.builder()
+                    .valid(verified && expiryTime.after(new Date()))
+                    .build();
+        } catch (JOSEException | ParseException e) {
+            e.printStackTrace();
+        }
+        return IntrospectResponse.builder()
+                .valid(false)
+                .build();
     }
 }

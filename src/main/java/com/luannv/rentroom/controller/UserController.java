@@ -1,29 +1,26 @@
 package com.luannv.rentroom.controller;
 
-import com.luannv.rentroom.dto.request.UserRegisterRequestDTO;
 import com.luannv.rentroom.dto.response.ApiResponse;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
 import com.luannv.rentroom.exception.ErrorCode;
-import com.luannv.rentroom.exception.ListErrorException;
 import com.luannv.rentroom.service.UserService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.luannv.rentroom.constants.UrlConstants.API_USER;
 import static com.luannv.rentroom.constants.UrlConstants.DEFAULT_AVATAR;
 
 @RestController
+
 @RequestMapping(API_USER)
-public class UserController {
+public class UserController  {
 
     private final UserService userService;
     @Autowired
@@ -31,7 +28,9 @@ public class UserController {
         this.userService = userService;
     }
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     public List<UserResponseDTO> getAllUser() {
+        System.out.println(">>>> " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
         return this.userService.getAll();
     }
     @GetMapping("/{username}/avatar")
