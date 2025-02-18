@@ -23,6 +23,8 @@ public enum ErrorCode {
     EMAIL_EXISTED(2000, "Email has been used.", HttpStatus.CONFLICT),
     VALIDATION_FAILED(2001, "Validation failed", HttpStatus.BAD_REQUEST),
     LOGIN_FAILED(2002, "Invalid username or password", HttpStatus.UNAUTHORIZED),
+    UNAUTHENTICATED(2003, "You must login first.", HttpStatus.UNAUTHORIZED),
+    ACCESS_DENIED(2004, "You don't have permission to access the resources.", HttpStatus.FORBIDDEN)
     ;
     private final Integer code;
     private final String messages;

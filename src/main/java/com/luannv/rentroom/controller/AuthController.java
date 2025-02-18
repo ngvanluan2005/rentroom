@@ -1,6 +1,7 @@
 package com.luannv.rentroom.controller;
 
 import com.luannv.rentroom.dto.request.IntrospectRequest;
+import com.luannv.rentroom.dto.request.LogoutRequest;
 import com.luannv.rentroom.dto.request.UserLoginRequestDTO;
 import com.luannv.rentroom.dto.request.UserRegisterRequestDTO;
 import com.luannv.rentroom.dto.response.ApiResponse;
@@ -11,6 +12,7 @@ import com.luannv.rentroom.exception.ErrorCode;
 import com.luannv.rentroom.exception.ListErrorException;
 import com.luannv.rentroom.exception.SingleErrorException;
 import com.luannv.rentroom.service.AuthService;
+import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.text.ParseException;
 import java.util.Map;
 
 @RestController
@@ -51,6 +54,14 @@ public class AuthController {
         apiResponse.setCode(HttpStatus.OK.value());
         apiResponse.setResult(authenticationResponse);
         return apiResponse;
+    }
+    @PostMapping("/logout")
+    public ApiResponse<Long, String> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+        this.authService.logout(request);
+        return ApiResponse.<Long, String>builder()
+                .messages("Logout success!")
+                .result(System.currentTimeMillis())
+                .build();
     }
     @PostMapping("/introspect")
     public ApiResponse<IntrospectResponse, ?> verifyToken(@RequestBody IntrospectRequest introspectRequest) {

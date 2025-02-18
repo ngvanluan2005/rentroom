@@ -1,14 +1,18 @@
 package com.luannv.rentroom.service;
 
 import com.luannv.rentroom.dto.request.IntrospectRequest;
+import com.luannv.rentroom.dto.request.LogoutRequest;
 import com.luannv.rentroom.dto.request.UserLoginRequestDTO;
 import com.luannv.rentroom.dto.request.UserRegisterRequestDTO;
 import com.luannv.rentroom.dto.response.AuthenticationResponse;
 import com.luannv.rentroom.dto.response.IntrospectResponse;
 import com.luannv.rentroom.dto.response.UserResponseDTO;
+import com.luannv.rentroom.entity.InvalidatedToken;
 import com.luannv.rentroom.entity.UserEntity;
 import com.luannv.rentroom.exception.ErrorCode;
+import com.luannv.rentroom.exception.SingleErrorException;
 import com.luannv.rentroom.mapper.UserMapper;
+import com.luannv.rentroom.repository.InvalidatedTokenRepository;
 import com.luannv.rentroom.repository.RoleRepository;
 import com.luannv.rentroom.repository.UserRepository;
 import com.luannv.rentroom.utils.SecurityUtils;
@@ -41,16 +45,18 @@ public class AuthService {
     private final SecurityUtils securityUtils;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final InvalidatedTokenRepository invalidatedTokenRepository;
     @NonFinal
     @Value("${security.jwt.signerKey}")
     protected String KEY_SIGNER;
     @Autowired
-    public AuthService(UserRepository userRepository, UserMapper userMapper, SecurityUtils securityUtils, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository, UserMapper userMapper, SecurityUtils securityUtils, RoleRepository roleRepository, PasswordEncoder passwordEncoder, InvalidatedTokenRepository invalidatedTokenRepository) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.securityUtils = securityUtils;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.invalidatedTokenRepository = invalidatedTokenRepository;
     }
     public Map<?, ?> validateUserRequest(BindingResult bindingResult, UserRegisterRequestDTO userRequestDTO) {
         Map<String, String> errorsResponse = new HashMap<>();
@@ -89,17 +95,24 @@ public class AuthService {
         return this.userMapper.toResponseDTO(saved);
     }
     public AuthenticationResponse loginUserValidate(UserLoginRequestDTO userLoginRequestDTO, BindingResult bindingResult) {
+        this.userRepository.findByUsername(userLoginRequestDTO.getUsername()).ifPresentOrElse(userEntity -> {
+
+        });
         UserEntity userEntity = this.userRepository.findByUsername(userLoginRequestDTO.getUsername()).get();
+
+        boolean isAuth = false;
+        StringBuilder token = new StringBuilder();
         if (passwordEncoder.matches(userLoginRequestDTO.getPassword(), userEntity.getPassword())) {
-            String token = generateToken(userLoginRequestDTO.getUsername(),
-                    Collections.singletonList(userEntity.getRole().getName()));
-            return AuthenticationResponse.builder()
-                    .token(token)
-                    .authenicated(true)
-                    .build();
+            token.append(generateToken(userLoginRequestDTO.getUsername(),
+                    Collections.singletonList(userEntity.getRole().getName())));
+            isAuth = true;
         }
-        return null;
+        return AuthenticationResponse.builder()
+                .token(token.toString())
+                .authenicated(isAuth)
+                .build();
     }
+
     public String generateToken(String username, List<String> roles) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -107,7 +120,7 @@ public class AuthService {
                 .issuer("luannv.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
-                .claim("claimer", "customeClaimer")
+                .jwtID(UUID.randomUUID().toString())
                 .claim("roles", roles)
                 .build();
         JWSObject jwsObject = new JWSObject(jwsHeader, jwtClaimsSet.toPayload());
@@ -121,19 +134,39 @@ public class AuthService {
     }
     public IntrospectResponse introspect(IntrospectRequest introspectRequest) {
         String token = introspectRequest.getToken();
+        boolean isValid = true;
+        try {
+            verifyToken(token);
+        } catch (JOSEException | ParseException | SingleErrorException e ) {
+            isValid = false;
+        }
+        return IntrospectResponse.builder()
+                .valid(isValid)
+                .build();
+    }
+    public SignedJWT verifyToken(String token) throws JOSEException, ParseException {
         try {
             JWSVerifier verifier = new MACVerifier(KEY_SIGNER.getBytes(StandardCharsets.UTF_8));
             SignedJWT signedJWT = SignedJWT.parse(token);
             boolean verified = signedJWT.verify(verifier);
             Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-            return IntrospectResponse.builder()
-                    .valid(verified && expiryTime.after(new Date()))
-                    .build();
-        } catch (JOSEException | ParseException e) {
-            e.printStackTrace();
+            if (!(verified && expiryTime.after(new Date())))
+                throw new SingleErrorException(ErrorCode.UNAUTHENTICATED);
+            if (this.invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID()))
+                throw new SingleErrorException(ErrorCode.UNAUTHENTICATED);
+            return signedJWT;
+        } catch (Exception e) {
+            throw new SingleErrorException(ErrorCode.UNAUTHENTICATED);
         }
-        return IntrospectResponse.builder()
-                .valid(false)
+    }
+    public void logout(LogoutRequest request) throws ParseException, JOSEException {
+        SignedJWT signedJWT = verifyToken(request.getToken());
+        String jit = signedJWT.getJWTClaimsSet().getJWTID();
+        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                .id(jit)
+                .expiryTime(expiryTime)
                 .build();
+        this.invalidatedTokenRepository.save(invalidatedToken);
     }
 }

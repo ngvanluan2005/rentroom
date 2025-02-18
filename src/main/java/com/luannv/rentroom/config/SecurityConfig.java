@@ -1,13 +1,16 @@
 package com.luannv.rentroom.config;
 
 import com.luannv.rentroom.enums.Role;
+import com.luannv.rentroom.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,12 +27,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final String[] PUBLIC_ENDPOINTS = {
             "/login/**",
             "/register/**",
-            "/introspect/**"
+            "/introspect/**",
+            "/logout/**"
     };
     private final String[] ADMIN_ENDPOINTS = {
             "/api/roles/**"
@@ -57,13 +63,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.GET, SWAGGER_WHITELIST).permitAll() // dev
+                        .requestMatchers(SWAGGER_WHITELIST).permitAll() // dev
                         .requestMatchers(ADMIN_ENDPOINTS).hasAnyRole(Role.ADMIN.name())
-                        .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                .userDetailsService(userDetailsService)
-                .httpBasic(Customizer.withDefaults());
+                .formLogin(login -> login.disable())
+                .logout(logout -> logout.disable())
+                .userDetailsService(userDetailsService);
+//      http.httpBasic(Customizer.withDefaults());
+        http.exceptionHandling(e -> e
+                .accessDeniedHandler((request, response, exception) -> {throw new AuthorizationDeniedException(ErrorCode.ACCESS_DENIED.getMessages());}));
         http.oauth2ResourceServer(auth -> auth
                 .jwt(jwtConfigurer -> jwtConfigurer
                         .decoder(jwtDecoder())

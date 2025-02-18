@@ -4,10 +4,12 @@ import com.luannv.rentroom.dto.response.ApiResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -20,17 +22,19 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(ListErrorException.class)
     public ResponseEntity<ApiResponse<Integer, Map<?, ?>>> handleValueException(ListErrorException ve) {
+        ErrorCode errorCode = ve.getErrorCode();
         ApiResponse<Integer, Map<?, ?>> apiResponse = new ApiResponse<>();
-        apiResponse.setCode(HttpStatus.BAD_REQUEST.value());
+        apiResponse.setCode(errorCode.getCode());
         apiResponse.setMessages(ve.getErrors());
-        return ResponseEntity.badRequest().body(apiResponse);
+        return ResponseEntity.status(ve.getErrorCode().getHttpStatus()).body(apiResponse);
     }
     @ExceptionHandler(SingleErrorException.class)
     public ResponseEntity<ApiResponse<Integer, String>> handleValueException(SingleErrorException see) {
+        ErrorCode errorCode = see.getErrorCode();
         ApiResponse<Integer, String> apiResponse = new ApiResponse<>();
-        apiResponse.setCode(HttpStatus.BAD_REQUEST.value());
-        apiResponse.setMessages(see.getErrorCode().getMessages());
-        return ResponseEntity.badRequest().body(apiResponse);
+        apiResponse.setCode(errorCode.getCode());
+        apiResponse.setMessages(errorCode.getMessages());
+        return ResponseEntity.status(see.getErrorCode().getHttpStatus()).body(apiResponse);
     }
 
     @ExceptionHandler(IllegalStateException.class)
@@ -62,5 +66,19 @@ public class GlobalExceptionHandler {
             apiResponse.setMessages(ErrorCode.ENUM_ISNOTEXIST.getMessages());
         }
         return ResponseEntity.badRequest().body(apiResponse);
+    }
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse<Void, String>> handleAccessDenied(AuthorizationDeniedException ade) {
+        ApiResponse<Void, String> apiResponse = new ApiResponse<>();
+        apiResponse.setCode(ErrorCode.ACCESS_DENIED.getCode());
+        apiResponse.setMessages(ade.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
+    }
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ApiResponse<Void, String>> handleAccessDenied(NoSuchElementException nsee) {
+        ApiResponse<Void, String> apiResponse = new ApiResponse<>();
+        apiResponse.setCode(ErrorCode.ACCESS_DENIED.getCode());
+        apiResponse.setMessages(nsee.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 }
