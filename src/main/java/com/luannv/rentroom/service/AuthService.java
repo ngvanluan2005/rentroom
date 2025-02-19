@@ -74,7 +74,7 @@ public class AuthService {
     }
     public UserResponseDTO addUser(UserRegisterRequestDTO userRequestDTO, MultipartFile multipartFile) {
         UserEntity userEntity = this.userMapper.toEntity(userRequestDTO);
-        if (this.securityUtils.getCurrentRole() != null && this.securityUtils.getCurrentRole().equalsIgnoreCase("admin")) {
+        if (this.securityUtils.getCurrentRole() != null && this.securityUtils.getCurrentRole().equalsIgnoreCase("ROLE_ADMIN")) {
             userEntity.setRole(this.roleRepository.findById(userRequestDTO.getRoleId()).get());
         } else {
             userEntity.setRole(this.roleRepository.findById(3).get());
@@ -94,22 +94,17 @@ public class AuthService {
         UserEntity saved = this.userRepository.save(userEntity);
         return this.userMapper.toResponseDTO(saved);
     }
-    public AuthenticationResponse loginUserValidate(UserLoginRequestDTO userLoginRequestDTO, BindingResult bindingResult) {
-        this.userRepository.findByUsername(userLoginRequestDTO.getUsername()).ifPresentOrElse(userEntity -> {
-
-        });
-        UserEntity userEntity = this.userRepository.findByUsername(userLoginRequestDTO.getUsername()).get();
-
-        boolean isAuth = false;
-        StringBuilder token = new StringBuilder();
-        if (passwordEncoder.matches(userLoginRequestDTO.getPassword(), userEntity.getPassword())) {
-            token.append(generateToken(userLoginRequestDTO.getUsername(),
-                    Collections.singletonList(userEntity.getRole().getName())));
-            isAuth = true;
-        }
+    public AuthenticationResponse loginUserValidate(UserLoginRequestDTO userLoginRequestDTO) {
+        Optional<UserEntity> optionalUserEntity = this.userRepository.findByUsername(userLoginRequestDTO.getUsername());
+        if (optionalUserEntity.isEmpty())
+            return null;
+        UserEntity userEntity = optionalUserEntity.get();
+        if (!passwordEncoder.matches(userLoginRequestDTO.getPassword(), userEntity.getPassword()))
+            return null;
+        String token = generateToken(userLoginRequestDTO.getUsername(), Arrays.asList(userEntity.getRole().getName()));
         return AuthenticationResponse.builder()
-                .token(token.toString())
-                .authenicated(isAuth)
+                .token(token)
+                .authenicated(true)
                 .build();
     }
 

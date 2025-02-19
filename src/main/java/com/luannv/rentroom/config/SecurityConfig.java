@@ -1,13 +1,14 @@
 package com.luannv.rentroom.config;
 
-import com.luannv.rentroom.enums.Role;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.luannv.rentroom.enums.RoleEnums;
 import com.luannv.rentroom.exception.ErrorCode;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,7 +24,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -64,7 +67,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(SWAGGER_WHITELIST).permitAll() // dev
-                        .requestMatchers(ADMIN_ENDPOINTS).hasAnyRole(Role.ADMIN.name())
+                        .requestMatchers(ADMIN_ENDPOINTS).hasAnyRole(RoleEnums.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, MANAGER_ENDPOINTS).hasAnyRole(RoleEnums.ADMIN.name(), RoleEnums.MODERATOR.name())
                         .anyRequest().authenticated()
                 )
                 .formLogin(login -> login.disable())
@@ -72,7 +76,27 @@ public class SecurityConfig {
                 .userDetailsService(userDetailsService);
 //      http.httpBasic(Customizer.withDefaults());
         http.exceptionHandling(e -> e
-                .accessDeniedHandler((request, response, exception) -> {throw new AuthorizationDeniedException(ErrorCode.ACCESS_DENIED.getMessages());}));
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+
+                    Map<String, Object> errorResponse = errorResponseTemplate(ErrorCode.UNAUTHENTICATED.getCode(),
+                            ErrorCode.UNAUTHENTICATED.getMessages());
+
+                    String jsonResponse = new ObjectMapper().writeValueAsString(errorResponse);
+                    response.getWriter().write(jsonResponse);
+                })
+                .accessDeniedHandler((request, response, exception) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+
+                    Map<String, Object> errorResponse = errorResponseTemplate(ErrorCode.ACCESS_DENIED.getCode(),
+                            ErrorCode.ACCESS_DENIED.getMessages());
+
+                    String jsonResponse = new ObjectMapper().writeValueAsString(errorResponse);
+                    response.getWriter().write(jsonResponse);
+                }));
+
         http.oauth2ResourceServer(auth -> auth
                 .jwt(jwtConfigurer -> jwtConfigurer
                         .decoder(jwtDecoder())
@@ -103,6 +127,14 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    private static Map<String, Object> errorResponseTemplate(Integer errorCode, String message) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.putIfAbsent("error", errorCode);
+        errorResponse.putIfAbsent("message", message);
+        errorResponse.putIfAbsent("timestamp", System.currentTimeMillis());
+        return errorResponse;
     }
 //    Hard code user data
 //    @Bean

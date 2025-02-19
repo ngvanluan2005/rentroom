@@ -9,7 +9,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,7 +29,6 @@ public class UserController  {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     public List<UserResponseDTO> getAllUser() {
-        System.out.println(">>>> " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
         return this.userService.getAll();
     }
     @GetMapping("/{username}/avatar")
@@ -59,6 +57,13 @@ public class UserController  {
             apiResponse.setCode(HttpStatus.BAD_REQUEST.value());
             apiResponse.setMessages(ErrorCode.USER_DELETE_FAIL);
         }
+
+        return apiResponse;
+    }
+    @PutMapping("/{username}")
+    public ApiResponse<?, ?> editUser(@PathVariable String username) {
+        ApiResponse<?, ?> apiResponse = new ApiResponse<>();
+        this.userService.editUserInfo(username);
 
         return apiResponse;
     }

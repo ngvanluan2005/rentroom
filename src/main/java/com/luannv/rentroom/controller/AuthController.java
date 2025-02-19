@@ -47,7 +47,7 @@ public class AuthController {
     }
     @PostMapping("/login")
     public ApiResponse<String, AuthenticationResponse> loginUser(@Valid @RequestBody UserLoginRequestDTO userLoginRequestDTO, BindingResult bindingResult) {
-        AuthenticationResponse authenticationResponse = this.authService.loginUserValidate(userLoginRequestDTO, bindingResult);
+        AuthenticationResponse authenticationResponse = this.authService.loginUserValidate(userLoginRequestDTO);
         if (bindingResult.hasErrors() || authenticationResponse == null)
             throw new SingleErrorException(ErrorCode.LOGIN_FAILED);
         ApiResponse apiResponse = new ApiResponse();

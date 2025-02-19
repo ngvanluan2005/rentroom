@@ -1,9 +1,6 @@
 package com.luannv.rentroom.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -36,7 +33,7 @@ public class UserEntity {
     private LocalDateTime createAt;
     @Column(name = "password")
     private String password;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "role_id")
     @Enumerated(EnumType.STRING)
     private Role role;

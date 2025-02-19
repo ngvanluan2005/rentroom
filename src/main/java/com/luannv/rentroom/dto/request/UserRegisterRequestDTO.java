@@ -1,14 +1,10 @@
 package com.luannv.rentroom.dto.request;
 
-import com.luannv.rentroom.entity.Role;
-import jakarta.persistence.*;
+import jakarta.persistence.Lob;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
-import org.springframework.security.access.prepost.PreAuthorize;
-
-import java.time.LocalDateTime;
 
 import static com.luannv.rentroom.constants.FieldConstants.PASSWORD_PATTERN;
 
@@ -19,7 +15,7 @@ import static com.luannv.rentroom.constants.FieldConstants.PASSWORD_PATTERN;
 @Builder
 public class UserRegisterRequestDTO {
     @NotEmpty(message = "FIELD_NOT_BLANK")
-    @Pattern(regexp = "^(?![_-])[A-Za-z0-9_-]{3,15}(?<![-_])$", message = "USERNAME_INVALID")
+    @Pattern(regexp = "^[A-Za-z0-9]{3,15}$", message = "USERNAME_INVALID")
     private String username;
     @NotEmpty(message = "FIELD_NOT_BLANK")
     private String firstName;
