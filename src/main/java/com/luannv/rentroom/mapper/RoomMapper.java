@@ -1,12 +1,18 @@
 package com.luannv.rentroom.mapper;
 
+import org.springframework.stereotype.Component;
+
 import com.luannv.rentroom.dto.request.RoomRequestDTO;
 import com.luannv.rentroom.entity.Room;
 
-public class RoomMapper implements GenericMapper<Room, RoomRequestDTO, Object>{
+@Component
+public class RoomMapper implements GenericMapper<Room, RoomRequestDTO, Object> {
     @Override
     public Room toEntity(RoomRequestDTO roomRequestDTO) {
-        return null;
+        return Room.builder()
+                .title(roomRequestDTO.getTitle())
+                .list(roomRequestDTO.getRequest())
+                .build();
     }
 
     @Override

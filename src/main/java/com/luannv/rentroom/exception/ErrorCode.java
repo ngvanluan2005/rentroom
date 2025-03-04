@@ -1,8 +1,9 @@
 package com.luannv.rentroom.exception;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
@@ -24,8 +25,13 @@ public enum ErrorCode {
     VALIDATION_FAILED(2001, "Validation failed", HttpStatus.BAD_REQUEST),
     LOGIN_FAILED(2002, "Invalid username or password", HttpStatus.UNAUTHORIZED),
     UNAUTHENTICATED(2003, "You must login first.", HttpStatus.UNAUTHORIZED),
-    ACCESS_DENIED(2004, "You don't have permission to access the resources.", HttpStatus.FORBIDDEN)
+    ACCESS_DENIED(2004, "You don't have permission to access the resources.", HttpStatus.FORBIDDEN),
+    USERNAME_CHANGER(2004, "Can not change your username.", HttpStatus.FORBIDDEN),
+    PASSWORD_CONFIRM(2005, "Repassword not correct.", HttpStatus.BAD_REQUEST),
+    UPDATE_PROFILE_ERROR(2006, "Cannot update your profile", HttpStatus.BAD_REQUEST)
+
     ;
+
     private final Integer code;
     private final String messages;
     private final HttpStatus httpStatus;

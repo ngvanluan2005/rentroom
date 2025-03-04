@@ -9,8 +9,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ApiResponse<T, S> {
+public class ApiResponse<R, M> {
     private Integer code;
-    private T result;
-    private S messages;
+    private R result;
+    private M messages;
 }

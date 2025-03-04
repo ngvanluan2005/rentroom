@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -40,7 +41,7 @@ public class UserEntity {
 
     @PrePersist
     @PreUpdate
-    private void prepareData(){
+    private void prepareData() {
         this.email = email == null ? null : email.toLowerCase();
         this.username = username == null ? null : username.toLowerCase();
         this.createAt = LocalDateTime.now();
