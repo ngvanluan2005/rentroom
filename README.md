@@ -22,7 +22,7 @@ RentRoom is a feature-rich **rental room management** REST API designed with **r
 - **Manage Listings** (Create, Update, Delete rooms for rent)  
 - **Rent Rooms** (View available rooms and make rental requests)  
 - **Report Violations** (Flag inappropriate listings or users)  
-
+(In Development)
 ### **2. Moderator Features**
 - **Approve/Reject Listings** (Ensure only verified listings are live)  
 - **Handle Reports** (Review user-reported violations)  
